@@ -2,15 +2,42 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 18px; /* Base font size for desktop */
+}
+
+/* Large screens (desktops, >1200px) */
+@media (min-width: 1200px) {
+  :root {
+    font-size: 20px;
+  }
+}
+
+/* Medium screens (tablets, 768px–1199px) */
+@media (max-width: 1199px) and (min-width: 768px) {
+  :root {
+    font-size: 16px;
+  }
+}
+
+/* Small screens (phones, <768px) */
+@media (max-width: 767px) {
+  :root {
+    font-size: 14px;
+  }
+}
+
+/* Extra small screens (<400px) */
+@media (max-width: 400px) {
+  :root {
+    font-size: 12px;
+  }
 }
 
 a {
