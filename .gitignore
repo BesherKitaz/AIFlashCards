@@ -25,3 +25,4 @@ dist-ssr
 .venv/
 .flaskenv
 __pycache__/
+db.config.json
