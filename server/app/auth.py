@@ -5,8 +5,8 @@ from flask_bcrypt import Bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
 from peewee import DoesNotExist
+from app.secret_key import SECRET_KEY
 
-SECRET_KEY = 'your_secret_key_here'  # Change to a secure value
 bcrypt = Bcrypt()
 auth = Blueprint('auth', __name__)
 
