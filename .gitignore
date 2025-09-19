@@ -14,6 +14,7 @@ dist-ssr
 
 # Editor directories and files
 secret_key.py
+test.py
 file.py
 .vscode/*
 !.vscode/extensions.json

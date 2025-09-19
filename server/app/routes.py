@@ -10,27 +10,11 @@ from app.models.cards import Card
 from app.models.users import User
 from app.models.dbSetup import db
 from app.secret_key import SECRET_KEY 
+from app.logic.generate_cards_from_photo import generate_flashcards_from_photo
 import jwt
 import json
 
 api = Blueprint("api", __name__)
-
-# Helper function to process image with AI (placeholder for now)
-def process_image_with_ai(image_file):
-    """
-    Placeholder function for AI image processing
-    In a real implementation, this would:
-    1. Use OCR to extract text from image
-    2. Use AI to generate questions and answers
-    3. Return structured flashcard data
-    """
-    # Dummy response for now
-    cards = [
-        {"front": "What is photosynthesis?", "back": "The process by which plants convert sunlight into energy"},
-        {"front": "What is the capital of France?", "back": "Paris"},
-        {"front": "What is 2 + 2?", "back": "4"}
-    ]
-    return cards
 
 
 # Card Sets endpoints
@@ -337,7 +321,7 @@ def process_image():
             return jsonify({"error": "No file selected"}), 400
         if file and file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
             # Process the image with AI
-            cards_data = process_image_with_ai(file)
+            cards_data = generate_flashcards_from_photo(file)
             # If setId is provided, save the cards to the database
             if set_id:
                 db.connect()
@@ -381,4 +365,5 @@ def process_image():
     except Exception as e:
         if 'db' in locals():
             db.close()
+        print(f"Error in process_image: {e}")
         return jsonify({"error": str(e)}), 500
