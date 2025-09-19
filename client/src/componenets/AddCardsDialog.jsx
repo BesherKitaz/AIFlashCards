@@ -45,17 +45,16 @@ const AddCardsDialog = ({ open, onClose, onCardsAdded, setId = null, title = "Ad
         setProcessingImage(true);
         const formData = new FormData();
         formData.append('image', selectedFile);
-        const userId = '1'; // Dummy user ID
         if (setId) formData.append('setId', setId);
-
         try {
+            const token = localStorage.getItem('token');
             // API call to process image with AI
-            const response = await axios.post(`http://localhost:5000/api/process-image/${userId}`, formData, {
+            const response = await axios.post(`http://localhost:5000/api/process-image/`, formData, {
                 headers: {
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
-
             const newCards = response.data.cards;
             onCardsAdded(newCards, `${newCards.length} cards generated from image!`, 'success');
             handleCloseDialog();
@@ -93,11 +92,15 @@ const AddCardsDialog = ({ open, onClose, onCardsAdded, setId = null, title = "Ad
         // If setId is provided, save to database (EditSet scenario)
         if (setId) {
             try {
-                const userId = 1; // Dummy user ID
-                const response = await axios.post(`http://localhost:5000/api/card-sets/${userId}/${setId}/cards`, { 
+                const token = localStorage.getItem('token');
+                const response = await axios.post(`http://localhost:5000/api/card-sets/${setId}/cards`, { 
                     cards: validCards
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
-                
                 onCardsAdded(response.data.cards, `${response.data.count} cards added successfully!`, 'success');
                 handleCloseDialog();
             } catch (error) {
@@ -111,7 +114,6 @@ const AddCardsDialog = ({ open, onClose, onCardsAdded, setId = null, title = "Ad
                 front: card.front,
                 back: card.back
             }));
-            
             onCardsAdded(newCards, `${validCards.length} cards added successfully!`, 'success');
             handleCloseDialog();
         }

@@ -76,19 +76,21 @@ def get_card_sets():
     except jwt.InvalidTokenError:
         return jsonify({"error": "Invalid token"}), 401
 
-@api.route("/api/card-sets/<int:user_id>", methods=["POST"])
-def create_card_set(user_id):
+@api.route("/api/card-sets/", methods=["POST"])
+def create_card_set():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header missing"}), 401
     try:
+        token = auth_header.split(" ")[1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload['user_id']
         data = request.get_json()
         name = data.get('name')
         description = data.get('description', '')
-        
         if not name:
             return jsonify({"error": "Set name is required"}), 400
-        
         db.connect()
-        
-        # Get or create user based on userId
         try:
             user = User.get(User.id == user_id)
         except User.DoesNotExist:
@@ -97,7 +99,6 @@ def create_card_set(user_id):
                 email=f"user{user_id}@example.com",
                 password_hash="dummy_hash"
             )
-        
         fc_set = FC_Set.create(
             name=name,
             description=description,
@@ -105,9 +106,7 @@ def create_card_set(user_id):
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc)
         )
-        
         db.close()
-        
         return jsonify({
             "id": fc_set.id,
             "name": fc_set.name,
@@ -115,22 +114,26 @@ def create_card_set(user_id):
             "created_at": fc_set.created_at.isoformat(),
             "updated_at": fc_set.updated_at.isoformat()
         }), 201
-        
     except Exception as e:
         print(f"Error in create_card_set: {e}")
         db.close()
         return jsonify({"error": str(e)}), 500
 
-@api.route("/api/card-sets/<int:user_id>/<int:set_id>", methods=["GET"])
-def get_card_set(user_id, set_id):
+@api.route("/api/card-sets/<int:set_id>", methods=["GET"])
+def get_card_set(set_id):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header missing"}), 401
     try:
+        token = auth_header.split(" ")[1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload['user_id']
         db.connect()
         fc_set = FC_Set.get_by_id(set_id)
-        
         # Verify ownership
         if fc_set.owner.id != user_id:
+            db.close()
             return jsonify({"error": "Unauthorized"}), 403
-        
         set_data = {
             "id": fc_set.id,
             "name": fc_set.name,
@@ -138,58 +141,60 @@ def get_card_set(user_id, set_id):
             "created_at": fc_set.created_at.isoformat(),
             "updated_at": fc_set.updated_at.isoformat()
         }
-        
         db.close()
         return jsonify(set_data)
     except FC_Set.DoesNotExist:
-        print(f"FC_Set not found with id: {set_id}")
         db.close()
         return jsonify({"error": "Set not found"}), 404
     except Exception as e:
-        print(f"Error in get_card_set: {e}")
         db.close()
         return jsonify({"error": str(e)}), 500
 
-@api.route("/api/card-sets/<int:user_id>/<int:set_id>", methods=["DELETE"])
-def delete_card_set(user_id, set_id):
+@api.route("/api/card-sets/<int:set_id>", methods=["DELETE"])
+def delete_card_set(set_id):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header missing"}), 401
     try:
+        token = auth_header.split(" ")[1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload['user_id']
         db.connect()
         fc_set = FC_Set.get_by_id(set_id)
-        
         # Verify ownership
         if fc_set.owner.id != user_id:
+            db.close()
             return jsonify({"error": "Unauthorized"}), 403
-        
         # Delete all cards in this set first
         Card.delete().where(Card.fc_set == fc_set).execute()
-        
         # Delete the set
         fc_set.delete_instance()
-        
         db.close()
         return jsonify({"message": "Set deleted successfully"})
     except FC_Set.DoesNotExist:
-        print(f"FC_Set not found for deletion with id: {set_id}")
         db.close()
         return jsonify({"error": "Set not found"}), 404
     except Exception as e:
-        print(f"Error in delete_card_set: {e}")
         db.close()
         return jsonify({"error": str(e)}), 500
 
 # Cards endpoints
-@api.route("/api/card-sets/<int:user_id>/<int:set_id>/cards", methods=["GET"])
-def get_cards(user_id, set_id):
+@api.route("/api/card-sets/<int:set_id>/cards", methods=["GET"])
+def get_cards(set_id):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header missing"}), 401
     try:
+        token = auth_header.split(" ")[1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload['user_id']
         db.connect()
         fc_set = FC_Set.get_by_id(set_id)
-        
         # Verify ownership
         if fc_set.owner.id != user_id:
+            db.close()
             return jsonify({"error": "Unauthorized"}), 403
-        
         cards = Card.select().where(Card.fc_set == fc_set)
-        
         cards_data = []
         for card in cards:
             cards_data.append({
@@ -201,39 +206,38 @@ def get_cards(user_id, set_id):
                 "created_at": card.created_at.isoformat(),
                 "updated_at": card.updated_at.isoformat()
             })
-        
         db.close()
         return jsonify(cards_data)
     except FC_Set.DoesNotExist:
-        print(f"FC_Set not found for getting cards with id: {set_id}")
         db.close()
         return jsonify({"error": "Set not found"}), 404
     except Exception as e:
-        print(f"Error in get_cards: {e}")
         db.close()
         return jsonify({"error": str(e)}), 500
 
-@api.route("/api/card-sets/<int:user_id>/<int:set_id>/cards", methods=["POST"])
-def add_cards(user_id, set_id):
+@api.route("/api/card-sets/<int:set_id>/cards", methods=["POST"])
+def add_cards(set_id):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header missing"}), 401
     try:
+        token = auth_header.split(" ")[1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload['user_id']
         data = request.get_json()
         cards_data = data.get('cards', [])
-        
         if not cards_data:
             return jsonify({"error": "No cards provided"}), 400
-        
         db.connect()
         fc_set = FC_Set.get_by_id(set_id)
-        
         # Verify ownership
         if fc_set.owner.id != user_id:
+            db.close()
             return jsonify({"error": "Unauthorized"}), 403
-        
         created_cards = []
         for card_data in cards_data:
             front = card_data.get('front', '').strip()
             back = card_data.get('back', '').strip()
-            
             if front and back:
                 card = Card.create(
                     question=front,
@@ -248,41 +252,39 @@ def add_cards(user_id, set_id):
                     "back": card.answer,
                     "setId": set_id
                 })
-        
         db.close()
         return jsonify({"cards": created_cards, "count": len(created_cards)}), 201
-        
     except FC_Set.DoesNotExist:
-        print(f"FC_Set not found for adding cards with id: {set_id}")
         db.close()
         return jsonify({"error": "Set not found"}), 404
     except Exception as e:
-        print(f"Error in add_cards: {e}")
         db.close()
         return jsonify({"error": str(e)}), 500
 
-@api.route("/api/cards/<int:user_id>/<int:card_id>", methods=["PUT"])
-def update_card(user_id, card_id):
+@api.route("/api/cards/<int:card_id>", methods=["PUT"])
+def update_card(card_id):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header missing"}), 401
     try:
+        token = auth_header.split(" ")[1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload['user_id']
         data = request.get_json()
         front = data.get('front', '').strip()
         back = data.get('back', '').strip()
-        
         if not front or not back:
             return jsonify({"error": "Both front and back are required"}), 400
-        
         db.connect()
         card = Card.get_by_id(card_id)
-        
         # Verify ownership through the card's set
         if card.fc_set.owner.id != user_id:
+            db.close()
             return jsonify({"error": "Unauthorized"}), 403
-        
         card.question = front
         card.answer = back
         card.updated_at = datetime.now(timezone.utc)
         card.save()
-        
         updated_card = {
             "id": card.id,
             "front": card.question,
@@ -290,16 +292,12 @@ def update_card(user_id, card_id):
             "setId": card.fc_set.id,
             "updated_at": card.updated_at.isoformat()
         }
-        
         db.close()
         return jsonify(updated_card)
-        
     except Card.DoesNotExist:
-        print(f"Card not found for update with id: {card_id}")
         db.close()
         return jsonify({"error": "Card not found"}), 404
     except Exception as e:
-        print(f"Error in update_card: {e}")
         db.close()
         return jsonify({"error": str(e)}), 500
 
@@ -322,28 +320,33 @@ def delete_card(card_id):
         return jsonify({"error": str(e)}), 500
 
 # Image processing endpoint
-@api.route("/api/process-image/<int:user_id>", methods=["POST"])
-def process_image(user_id):
+@api.route("/api/process-image/", methods=["POST"])
+def process_image():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header missing"}), 401
     try:
+        token = auth_header.split(" ")[1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload['user_id']
         if 'image' not in request.files:
             return jsonify({"error": "No image file provided"}), 400
-        
         file = request.files['image']
         set_id = request.form.get('setId')
-        
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
-        
         if file and file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
             # Process the image with AI
             cards_data = process_image_with_ai(file)
-            
             # If setId is provided, save the cards to the database
             if set_id:
                 db.connect()
                 try:
                     fc_set = FC_Set.get_by_id(int(set_id))
-                    
+                    # Verify ownership
+                    if fc_set.owner.id != user_id:
+                        db.close()
+                        return jsonify({"error": "Unauthorized"}), 403
                     created_cards = []
                     for card_data in cards_data:
                         card = Card.create(
@@ -359,12 +362,9 @@ def process_image(user_id):
                             "back": card.answer,
                             "setId": int(set_id)
                         })
-                    
                     db.close()
                     return jsonify({"cards": created_cards})
-                    
                 except FC_Set.DoesNotExist:
-                    print(f"FC_Set not found for image processing with id: {set_id}")
                     db.close()
                     return jsonify({"error": "Set not found"}), 404
             else:
@@ -377,11 +377,8 @@ def process_image(user_id):
                         "back": card_data['back']
                     })
                 return jsonify({"cards": formatted_cards})
-        
         return jsonify({"error": "Invalid file format"}), 400
-        
     except Exception as e:
-        print(f"Error in process_image: {e}")
         if 'db' in locals():
             db.close()
         return jsonify({"error": str(e)}), 500

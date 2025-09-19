@@ -8,15 +8,8 @@ import Card from './Card'
 function CardSet() {
   const navigate = useNavigate();
   
-  // 6 dummy cards for testing
-  const [dummyCards, setDummyCards] = useState([
-    { question: 'card1', answer: 'answer1', id: 1 },
-    { question: 'card2', answer: 'answer2', id: 2 },
-    { question: 'card3', answer: 'answer3', id: 3 },
-    { question: 'card4', answer: 'answer4', id: 4 },
-    { question: 'card5', answer: 'answer5', id: 5 },
-    { question: 'card6', answer: 'answer6', id: 6 }
-  ]);
+  // TODO: Replace with API call to fetch cards for the set
+  const [dummyCards, setDummyCards] = useState([]);
   const [slideLeftId, setSlideLeftId] = useState(null);
   const [slideRightId, setSlideRightId] = useState(null);
   const [show, setShow] = useState(false);
@@ -60,6 +53,7 @@ function CardSet() {
   };
 
   const saveNewCard = () => {
+    // TODO: Replace with API call to add card to backend
     const question = newQuestion;
     const answer = newAnswer;
     if (!question || !answer) {

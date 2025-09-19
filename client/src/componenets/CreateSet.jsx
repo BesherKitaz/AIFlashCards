@@ -84,18 +84,28 @@ const CreateSet = () => {
         }
 
         try {
+            const token = localStorage.getItem('token');
             // API call to create set
-            const userId = 1; // Dummy user ID
-            const setResponse = await axios.post(`http://localhost:5000/api/card-sets/${userId}`, {
+            const setResponse = await axios.post(`http://localhost:5000/api/card-sets/`, {
                 name: setInfo.name,
                 description: setInfo.description
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
 
             const setId = setResponse.data.id;
 
             // API call to add cards
-            await axios.post(`http://localhost:5000/api/card-sets/${userId}/${setId}/cards`, {
+            await axios.post(`http://localhost:5000/api/card-sets/${setId}/cards`, {
                 cards: cards.map(card => ({ front: card.front, back: card.back }))
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
 
             showSnackbar('Set created successfully!', 'success');

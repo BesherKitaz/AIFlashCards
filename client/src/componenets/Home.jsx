@@ -76,7 +76,8 @@ const Home = () => {
                 <Typography variant="body1" color="text.secondary" gutterBottom>
                     Practice and memorize with your flashcards
                 </Typography>
-                <Button
+                {cardSets.length > 0 && (
+                    <Button
                     variant="contained"
                     startIcon={<AddIcon />}
                     sx={{ mt: 2 }}
@@ -84,6 +85,7 @@ const Home = () => {
                 >
                     Create New Set
                 </Button>
+            )}
             </Box>
 
             {/* Error Display */}

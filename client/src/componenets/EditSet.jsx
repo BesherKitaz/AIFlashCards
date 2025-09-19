@@ -51,9 +51,19 @@ const EditSet = () => {
         try {
             setLoading(true);
             // Fetch card set info and cards from API
-            const setResponse = await axios.get(`http://localhost:5000/api/card-sets/${setId}`);
-            const cardsResponse = await axios.get(`http://localhost:5000/api/card-sets/${setId}/cards`);
-            
+            const token = localStorage.getItem('token');
+            const setResponse = await axios.get(`http://localhost:5000/api/card-sets/${setId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            const cardsResponse = await axios.get(`http://localhost:5000/api/card-sets/${setId}/cards`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             setCardSet(setResponse.data);
             setCards(cardsResponse.data);
         } catch (error) {
@@ -71,17 +81,20 @@ const EditSet = () => {
     const handleSaveCard = async () => {
         try {
             // API call to update card
-            const userId = 1; // Dummy user ID
-            await axios.put(`http://localhost:5000/api/cards/${userId}/${editingCard.id}`, {
+            const token = localStorage.getItem('token');
+            await axios.put(`http://localhost:5000/api/cards/${editingCard.id}`, {
                 front: editingCard.front,
                 back: editingCard.back
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
-            
             // Update local state
             setCards(cards.map(card => 
                 card.id === editingCard.id ? editingCard : card
             ));
-            
             setEditingCard(null);
             showSnackbar('Card updated successfully!', 'success');
         } catch (error) {
@@ -93,8 +106,13 @@ const EditSet = () => {
     const handleDeleteCard = async (cardId) => {
         try {
             // API call to delete card
-            await axios.delete(`http://localhost:5000/api/cards/${cardId}`);
-            
+            const token = localStorage.getItem('token');
+            await axios.delete(`http://localhost:5000/api/cards/${cardId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             // Update local state
             setCards(cards.filter(card => card.id !== cardId));
             setDeleteDialogOpen(false);
@@ -109,8 +127,13 @@ const EditSet = () => {
     const handleDeleteSet = async () => {
         try {
             // API call to delete set
-            await axios.delete(`http://localhost:5000/api/card-sets/${setId}`);
-            
+            const token = localStorage.getItem('token');
+            await axios.delete(`http://localhost:5000/api/card-sets/${setId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             setDeleteSetDialogOpen(false);
             showSnackbar('Set deleted successfully!', 'success');
             setTimeout(() => navigate('/'), 1500);
