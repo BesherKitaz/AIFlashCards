@@ -1,16 +1,17 @@
 from datetime import datetime, timezone
-from peewee import MySQLDatabase, Model, CharField, IntegerField, ForeignKeyField, TextField, DateTimeField
-from .dbSetup import db, BaseModel
+from peewee import MySQLDatabase, Model, CharField, IntegerField, ForeignKeyField, TextField, DateTimeField, AutoField
+from app.models.dbSetup import db, BaseModel
+from app.models.FC_set import FC_Set as FC
+
 
 class Card(BaseModel):
-    id = IntegerField(primary_key=True)
     question = TextField()
     answer = TextField()
-    fc_set = ForeignKeyField('FC_Set', backref='cards')
-    created_at = DateTimeField(default=datetime.now(timezone.utc))
-    updated_at = DateTimeField(default=datetime.now(timezone.utc))
+    fc_set = ForeignKeyField(FC)
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    updated_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
     score = IntegerField(default=0)
-    
+
 
 if __name__=='__main__':
     db.connect()

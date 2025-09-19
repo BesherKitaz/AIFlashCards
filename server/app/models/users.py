@@ -1,15 +1,14 @@
 
 from datetime import datetime, timezone
-from peewee import MySQLDatabase, Model, CharField, IntegerField, ForeignKeyField, TextField, DateTimeField
-from .dbSetup import db, BaseModel
+from peewee import MySQLDatabase, Model, CharField, IntegerField, ForeignKeyField, TextField, DateTimeField, AutoField
+from app.models.dbSetup import db, BaseModel
 
 class User(BaseModel):
-    id = IntegerField(primary_key=True)
     username = CharField(unique=True)
     email = CharField(unique=True)
     password_hash = CharField()
-    created_at = DateTimeField(default=datetime.now(timezone.utc))
-    updated_at = DateTimeField(default=datetime.now(timezone.utc))
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    updated_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
 
 if __name__=='__main__':
     db.connect()
