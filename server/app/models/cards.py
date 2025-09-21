@@ -1,8 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, timedelta
 from peewee import  IntegerField, ForeignKeyField, TextField, DateTimeField, FloatField, DateField
 from app.models.dbSetup import db, BaseModel
 from app.models.FC_set import FC_Set as FC
-from datetime import date
 
 class Card(BaseModel):
     question = TextField()
@@ -11,14 +10,21 @@ class Card(BaseModel):
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
     updated_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
 
+    interval = IntegerField(default=0)
+    repetitions = IntegerField(default=0)
+    ease_factor = FloatField(default=2.5)
+    ease_factor = FloatField(default=2.5)
+    due_date = DateField(default=date.today)
 
 
-    def review(self, grade: int):
+    def review(self, remembered: bool):
         """Update flashcard scheduling based on SM-2 algorithm"""
-        if grade < 3:
+        if not remembered:
+            grade = 0
             self.repetitions = 0
             self.interval = 1
         else:
+            grade = 5
             if self.repetitions == 0:
                 self.interval = 1
             elif self.repetitions == 1:
@@ -32,10 +38,7 @@ class Card(BaseModel):
         if self.ease_factor < 1.3:
             self.ease_factor = 1.3
 
-        # Update due date
         self.due_date = date.today() + timedelta(days=self.interval)
-
-        # Save changes to DB
         self.save()
 
 
