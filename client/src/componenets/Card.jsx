@@ -29,7 +29,7 @@ export default function Card({ topMargin, shouldSlideLeft, shouldSlideRight, que
     const initialMouseX = useRef(0);
     const positionRef = useRef(position);
 
-    const SWIPE_THRESHOLD = 600; // px, adjust as needed
+    const SWIPE_THRESHOLD = 600; 
 
     useEffect(() => {
         if (shouldSlideLeft) {
@@ -48,7 +48,10 @@ export default function Card({ topMargin, shouldSlideLeft, shouldSlideRight, que
         }
     }, [shouldSlideLeft, shouldSlideRight]);
 
-    const handleMouseDown = (e) => {
+
+// Code for drag and drop functionality (currently commented out for future use)
+
+ /*    const handleMouseDown = (e) => {
         setIsMouseDown(true);
         setDragging(true);
         // Calculate offset between mouse and card
@@ -115,7 +118,7 @@ export default function Card({ topMargin, shouldSlideLeft, shouldSlideRight, que
 
     useEffect(() => {
         positionRef.current = position;
-    }, [position]);
+    }, [position]); */
 
     return (
         <div
@@ -125,8 +128,8 @@ export default function Card({ topMargin, shouldSlideLeft, shouldSlideRight, que
                 left: position.x,
                 transform: `rotate(${rotation}deg)`,
             }}
-            onMouseDown={handleMouseDown}
-        >
+/*             onMouseDown={handleMouseDown}
+ */        >
             <div className={`card-inner${cardFlipped ? ' flipped' : ''}`} >
                 <CardSide side="front" cardFlipped={cardFlipped} setCardFlipped={setCardFlipped} text={question} />
                 <CardSide side="back" cardFlipped={cardFlipped} setCardFlipped={setCardFlipped} text={answer} />

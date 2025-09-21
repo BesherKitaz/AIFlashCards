@@ -65,43 +65,42 @@ def create_card_set():
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return jsonify({"error": "Authorization header missing"}), 401
+    token = auth_header.split(" ")[1]
+    payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    user_id = payload['user_id']
+    data = request.get_json()
+    name = data.get('name')
+    description = data.get('description', '')
+    if not name:
+        return jsonify({"error": "Set name is required"}), 400
+    db.connect()
     try:
-        token = auth_header.split(" ")[1]
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        user_id = payload['user_id']
-        data = request.get_json()
-        name = data.get('name')
-        description = data.get('description', '')
-        if not name:
-            return jsonify({"error": "Set name is required"}), 400
-        db.connect()
-        try:
-            user = User.get(User.id == user_id)
-        except User.DoesNotExist:
-            user = User.create(
-                username=f"user_{user_id}",
-                email=f"user{user_id}@example.com",
-                password_hash="dummy_hash"
-            )
-        fc_set = FC_Set.create(
-            name=name,
-            description=description,
-            owner=user,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
+        user = User.get(User.id == user_id)
+    except User.DoesNotExist:
+        user = User.create(
+            username=f"user_{user_id}",
+            email=f"user{user_id}@example.com",
+            password_hash="dummy_hash"
         )
-        db.close()
-        return jsonify({
-            "id": fc_set.id,
-            "name": fc_set.name,
-            "description": fc_set.description,
-            "created_at": fc_set.created_at.isoformat(),
-            "updated_at": fc_set.updated_at.isoformat()
-        }), 201
-    except Exception as e:
+    fc_set = FC_Set.create(
+        name=name,
+        description=description,
+        owner=user,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
+    )
+    db.close()
+    return jsonify({
+        "id": fc_set.id,
+        "name": fc_set.name,
+        "description": fc_set.description,
+        "created_at": fc_set.created_at.isoformat(),
+        "updated_at": fc_set.updated_at.isoformat()
+    }), 201
+"""     except Exception as e:
         print(f"Error in create_card_set: {e}")
         db.close()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 500 """
 
 @api.route("/api/card-sets/<int:set_id>", methods=["GET"])
 def get_card_set(set_id):
@@ -165,6 +164,7 @@ def delete_card_set(set_id):
 # Cards endpoints
 @api.route("/api/card-sets/<int:set_id>/cards", methods=["GET"])
 def get_cards(set_id):
+    print("Function invoked: get_cards")
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return jsonify({"error": "Authorization header missing"}), 401
@@ -258,12 +258,14 @@ def update_card(card_id):
         front = data.get('front', '').strip()
         back = data.get('back', '').strip()
         if not front or not back:
+            print("Both front and back are required")
             return jsonify({"error": "Both front and back are required"}), 400
         db.connect()
         card = Card.get_by_id(card_id)
         # Verify ownership through the card's set
         if card.fc_set.owner.id != user_id:
             db.close()
+            print("Unauthorized access to update card")
             return jsonify({"error": "Unauthorized"}), 403
         card.question = front
         card.answer = back
@@ -366,4 +368,27 @@ def process_image():
         if 'db' in locals():
             db.close()
         print(f"Error in process_image: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@api.route("/api/score/<int:card_id>", methods=["PUT"])
+def update_card_score(card_id):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header missing"}), 401    
+    try:
+        db.connect()
+        card = Card.get_by_id(card_id)
+        data = request.get_json()
+            
+        return jsonify({
+            "id": card.id,
+            "front": card.question,
+            "back": card.answer,
+            "remembered": card.remembered
+        })
+    except Card.DoesNotExist:
+        db.close()
+        return jsonify({"error": "Card not found"}), 404
+    except Exception as e:
+        db.close()
         return jsonify({"error": str(e)}), 500
