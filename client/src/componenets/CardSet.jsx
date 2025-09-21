@@ -22,7 +22,10 @@ function CardSet() {
       const token = localStorage.getItem('token');
       if (!token || !setId) return;
       try {        
-        const response = await axios.get(`http://localhost:5000/api/card-sets/${setId}/cards`, {
+        const response = await axios.get(`http://localhost:5000/api/card-sets/${setId}/cards`,  {
+          params: {
+            studying: 1
+          },
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -100,7 +103,7 @@ function CardSet() {
       {loadingCards ? (
         <div>Loading cards...</div>
       ) : cards.length === 0 ? (
-        <div>No cards available.</div>
+        <div>No cards available for today in this set. Well Done!</div>
       ) : (
           <div className='cardContainer'> 
             {cards.map((card, index) => (
