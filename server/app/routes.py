@@ -164,40 +164,33 @@ def delete_card_set(set_id):
 # Cards endpoints
 @api.route("/api/card-sets/<int:set_id>/cards", methods=["GET"])
 def get_cards(set_id):
-    print("Function invoked: get_cards")
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return jsonify({"error": "Authorization header missing"}), 401
-    try:
-        token = auth_header.split(" ")[1]
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        user_id = payload['user_id']
-        db.connect()
-        fc_set = FC_Set.get_by_id(set_id)
-        # Verify ownership
-        if fc_set.owner.id != user_id:
-            db.close()
-            return jsonify({"error": "Unauthorized"}), 403
-        cards = Card.select().where(Card.fc_set == fc_set)
-        cards_data = []
-        for card in cards:
-            cards_data.append({
-                "id": card.id,
-                "front": card.question,
-                "back": card.answer,
-                "setId": set_id,
-                "score": card.score,
-                "created_at": card.created_at.isoformat(),
-                "updated_at": card.updated_at.isoformat()
-            })
+    token = auth_header.split(" ")[1]
+    payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    user_id = payload['user_id']
+    db.connect()
+    fc_set = FC_Set.get_by_id(set_id)
+    # Verify ownership
+    if fc_set.owner.id != user_id:
         db.close()
-        return jsonify(cards_data)
-    except FC_Set.DoesNotExist:
-        db.close()
-        return jsonify({"error": "Set not found"}), 404
-    except Exception as e:
-        db.close()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Unauthorized"}), 403
+    cards = Card.select().where(Card.fc_set == fc_set)
+    cards_data = []
+    for card in cards:
+        cards_data.append({
+            "id": card.id,
+            "front": card.question,
+            "back": card.answer,
+            "setId": set_id,
+            "created_at": card.created_at.isoformat(),
+            "updated_at": card.updated_at.isoformat()
+        })
+    db.close()
+    return jsonify(cards_data)
+
+
 
 @api.route("/api/card-sets/<int:set_id>/cards", methods=["POST"])
 def add_cards(set_id):
@@ -379,7 +372,8 @@ def update_card_score(card_id):
         db.connect()
         card = Card.get_by_id(card_id)
         data = request.get_json()
-            
+        remembered = data.get('remembered')
+        card.review(remembered)
         return jsonify({
             "id": card.id,
             "front": card.question,
