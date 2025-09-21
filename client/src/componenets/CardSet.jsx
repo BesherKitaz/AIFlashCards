@@ -1,15 +1,46 @@
-import { useState } from 'react'
+// Study it - Flashcard Application
+
+
+import { useState, useEffect } from 'react'
+import axios from 'axios';
 import { Modal, Button } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { IconButton, Box } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import Card from './Card'
 
 function CardSet() {
+  const { setId } = useParams();
   const navigate = useNavigate();
-  
-  // TODO: Replace with API call to fetch cards for the set
-  const [dummyCards, setDummyCards] = useState([]);
+  const [loadingCards, setLoadingCards] = useState(true);
+
+  // Cards state
+  const [cards, setCards] = useState([]);
+  // Fetch cards from backend when setId changes
+  useEffect(() => {
+    const fetchCards = async () => {
+      const token = localStorage.getItem('token');
+      if (!token || !setId) return;
+      try {        
+        const response = await axios.get(`http://localhost:5000/api/card-sets/${setId}/cards`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        // Map backend card fields to frontend
+        setCards(response.data.map(card => ({
+          id: card.id,
+          question: card.front,
+          answer: card.back
+        })));
+        setLoadingCards(false);
+      } catch (err) {
+        console.error('Failed to fetch cards:', err);
+        setCards([]);
+      }
+    };
+    fetchCards();
+  }, [setId]);
   const [slideLeftId, setSlideLeftId] = useState(null);
   const [slideRightId, setSlideRightId] = useState(null);
   const [show, setShow] = useState(false);
@@ -17,61 +48,62 @@ function CardSet() {
   const [newQuestion, setNewQuestion] = useState('');
   const [newAnswer, setNewAnswer] = useState('');
 
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
 
-
-
+  const sendScore = async (remembered) => {
+      const token = localStorage.getItem('token');
+      const response = axios.put(`http://localhost:5000/api/score/${cards[cards.length - 1].id}`, {
+        remembered: remembered
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+  }
   const remembered = () => {
-    if (dummyCards.length > 0) {
+    if (cards.length > 0) {
       setButtonsLocked(true)
-      setSlideLeftId(dummyCards[dummyCards.length - 1].id);
+      setSlideLeftId(cards[cards.length - 1].id);
+      sendScore(true);
       setTimeout(() => {
-      setDummyCards(prev => prev.slice(0, -1));
-      setSlideLeftId(null);
-      setButtonsLocked(false);
+        setCards(prev => prev.slice(0, -1));
+        setSlideLeftId(null);
+        setButtonsLocked(false);
       }, 500);
     }
   };
 
   const forgot = () => {
-    if (dummyCards.length > 0) {
+    if (cards.length > 0) {
       setButtonsLocked(true);
-      setSlideRightId(dummyCards[dummyCards.length - 1].id);
+      setSlideRightId(cards[cards.length - 1].id);
+      sendScore(false);
       setTimeout(() => {
-      setDummyCards(prev => prev.slice(0, -1));
-      setSlideRightId(null);
-      setButtonsLocked(false);
+        setCards(prev => prev.slice(0, -1));
+        setSlideRightId(null);
+        setButtonsLocked(false);
       }, 500);
     }
   };
 
   const handleRemoveCard = (id) => {
-    setDummyCards(prev => prev.filter(card => card.id !== id));
+    setCards(prev => prev.filter(card => card.id !== id));
     if (slideLeftId === id) setSlideLeftId(prev => prev - 1);
     if (slideRightId === id) setSlideRightId(prev => prev - 1);
   };
 
-  const saveNewCard = () => {
-    // TODO: Replace with API call to add card to backend
-    const question = newQuestion;
-    const answer = newAnswer;
-    if (!question || !answer) {
-      alert('Please fill in both fields');
-      return;
-    }
-    setDummyCards(prev => [...prev, { question, answer, id: Date.now() }]);
-    setNewQuestion('');
-    handleClose();
-  }
+
   return (
   <>
     <div className="container">
-      <div className='w-100 d-flex justify-content-end flex- mb-2'>
-        <div className="addCards" onClick={handleShow}> + </div>
-      </div>
+
+      {loadingCards ? (
+        <div>Loading cards...</div>
+      ) : cards.length === 0 ? (
+        <div>No cards available.</div>
+      ) : (
           <div className='cardContainer'> 
-            {dummyCards.map((card, index) => (
+            {cards.map((card, index) => (
               <Card
                 key={card.id}
                 topMargin={index < 3 ? index * 6 : 18}
@@ -84,6 +116,7 @@ function CardSet() {
               />
             ))}   
           </div>
+          )}
           <div className='buttonContainer'>
             <button className='btn btn-primary mt-5 mx-3' onClick={remembered} disabled={buttonsLocked}>
               I remembered this 👍
@@ -93,37 +126,13 @@ function CardSet() {
             </button>
           </div>
         </div>
-        <Modal show={show} onHide={handleClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>Add a New Card</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <form>
-              <div className="mb-3">
-                <label htmlFor="question" className="form-label">Question on Card</label>
-                <textarea className="form-control" id="question" value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)}></textarea>
-              </div>
-              <div className="mb-3">
-                <label htmlFor="answer" className="form-label">Answer to the question</label>
-                <textarea className="form-control" id="answer" value={newAnswer} onChange={(e) => setNewAnswer(e.target.value)}></textarea>
-              </div>
-            </form>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleClose}>
-              Close
-            </Button>
-            <Button variant="primary" onClick={() => saveNewCard()}>
-              Save Changes
-            </Button>
-          </Modal.Footer>
-      </Modal>
+
       <Box sx={{ position: 'fixed', top: 16, left: 16 }}>
         <IconButton onClick={() => navigate('/')}>
           <ArrowBackIcon />
         </IconButton>
       </Box>
-    </>
+    </>  
   )
 }
 
