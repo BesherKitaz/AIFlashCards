@@ -176,7 +176,15 @@ def get_cards(set_id):
     if fc_set.owner.id != user_id:
         db.close()
         return jsonify({"error": "Unauthorized"}), 403
-    cards = Card.select().where(Card.fc_set == fc_set)
+    studying = request.args.get("studying")
+
+    if bool(int(studying)):
+        cards = Card.select().where((Card.fc_set == fc_set) & (Card.due_date <= datetime.today()))
+        print(cards)
+    else:
+        cards = Card.select().where(Card.fc_set == fc_set)
+        print(cards)
+
     cards_data = []
     for card in cards:
         cards_data.append({

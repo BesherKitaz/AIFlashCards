@@ -59,6 +59,9 @@ const EditSet = () => {
                 }
             });
             const cardsResponse = await axios.get(`http://localhost:5000/api/card-sets/${setId}/cards`, {
+                params: {
+                    studying: 0
+                },
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -84,7 +87,7 @@ const EditSet = () => {
             const token = localStorage.getItem('token');
             await axios.put(`http://localhost:5000/api/cards/${editingCard.id}`, {
                 front: editingCard.front,
-                back: editingCard.back
+                back: editingCard.back,
             }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
