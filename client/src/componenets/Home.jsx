@@ -30,7 +30,7 @@ const Home = () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            const response = await axios.get(`http://localhost:5000/api/card-sets/`, {
+            const response = await axios.get(`/api/card-sets/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

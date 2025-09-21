@@ -22,7 +22,7 @@ function CardSet() {
       const token = localStorage.getItem('token');
       if (!token || !setId) return;
       try {        
-        const response = await axios.get(`http://localhost:5000/api/card-sets/${setId}/cards`,  {
+        const response = await axios.get(`/api/card-sets/${setId}/cards`,  {
           params: {
             studying: 1
           },
@@ -54,7 +54,7 @@ function CardSet() {
 
   const sendScore = async (remembered) => {
       const token = localStorage.getItem('token');
-      const response = axios.put(`http://localhost:5000/api/score/${cards[cards.length - 1].id}`, {
+      const response = axios.put(`/api/score/${cards[cards.length - 1].id}`, {
         remembered: remembered
       }, {
         headers: {

@@ -52,13 +52,13 @@ const EditSet = () => {
             setLoading(true);
             // Fetch card set info and cards from API
             const token = localStorage.getItem('token');
-            const setResponse = await axios.get(`http://localhost:5000/api/card-sets/${setId}`, {
+            const setResponse = await axios.get(`/api/card-sets/${setId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
-            const cardsResponse = await axios.get(`http://localhost:5000/api/card-sets/${setId}/cards`, {
+            const cardsResponse = await axios.get(`/api/card-sets/${setId}/cards`, {
                 params: {
                     studying: 0
                 },
@@ -85,7 +85,7 @@ const EditSet = () => {
         try {
             // API call to update card
             const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:5000/api/cards/${editingCard.id}`, {
+            await axios.put(`/api/cards/${editingCard.id}`, {
                 front: editingCard.front,
                 back: editingCard.back,
             }, {
@@ -110,7 +110,7 @@ const EditSet = () => {
         try {
             // API call to delete card
             const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:5000/api/cards/${cardId}`, {
+            await axios.delete(`/api/cards/${cardId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -131,7 +131,7 @@ const EditSet = () => {
         try {
             // API call to delete set
             const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:5000/api/card-sets/${setId}`, {
+            await axios.delete(`/api/card-sets/${setId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

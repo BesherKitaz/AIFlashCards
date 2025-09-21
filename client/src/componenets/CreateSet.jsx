@@ -86,7 +86,7 @@ const CreateSet = () => {
         try {
             const token = localStorage.getItem('token');
             // API call to create set
-            const setResponse = await axios.post(`http://localhost:5000/api/card-sets/`, {
+            const setResponse = await axios.post(`/api/card-sets/`, {
                 name: setInfo.name,
                 description: setInfo.description
             }, {
@@ -99,7 +99,7 @@ const CreateSet = () => {
             const setId = setResponse.data.id;
 
             // API call to add cards
-            await axios.post(`http://localhost:5000/api/card-sets/${setId}/cards`, {
+            await axios.post(`/api/card-sets/${setId}/cards`, {
                 cards: cards.map(card => ({ front: card.front, back: card.back }))
             }, {
                 headers: {

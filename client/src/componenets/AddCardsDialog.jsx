@@ -49,7 +49,7 @@ const AddCardsDialog = ({ open, onClose, onCardsAdded, setId = null, title = "Ad
         try {
             const token = localStorage.getItem('token');
             // API call to process image with AI
-            const response = await axios.post(`http://localhost:5000/api/process-image/`, formData, {
+            const response = await axios.post(`/api/process-image/`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
